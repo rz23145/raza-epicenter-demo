@@ -1,6 +1,6 @@
 PYTHON ?= python3.11
 
-.PHONY: install lint type unit readme-check test
+.PHONY: install lint type unit readme-check test check
 
 install:
 	pip install -e ".[dev]"
@@ -18,3 +18,6 @@ readme-check:
 	$(PYTHON) scripts/readme_check.py
 
 test: lint type unit readme-check
+
+check:
+	bash scripts/check.sh
