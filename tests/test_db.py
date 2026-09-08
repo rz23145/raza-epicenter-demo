@@ -25,8 +25,11 @@ EXPECTED_TABLES = {
     "wayback_app_matches",
     "wayback_fingerprint_matches",
     "hiring_posts",
+    "company_boards",
     "index_values",
 }
+
+EXPECTED_MIGRATIONS = ["001_init.sql", "002_company_boards.sql"]
 
 
 @pytest.fixture()
@@ -36,16 +39,16 @@ def conn(tmp_path: Path) -> sqlite3.Connection:
     return connection
 
 
-def test_migration_001_creates_all_tables(tmp_path: Path) -> None:
+def test_migrations_create_all_tables(tmp_path: Path) -> None:
     connection = connect(tmp_path / "fresh.db")
     applied = apply_migrations(connection)
-    assert applied == ["001_init.sql"]
+    assert applied == EXPECTED_MIGRATIONS
     assert EXPECTED_TABLES <= set(repo.table_names(connection))
 
 
 def test_reapply_is_noop(conn: sqlite3.Connection) -> None:
     assert apply_migrations(conn) == []
-    assert repo.applied_migrations(conn) == ["001_init.sql"]
+    assert repo.applied_migrations(conn) == EXPECTED_MIGRATIONS
 
 
 def test_foreign_keys_enforced(conn: sqlite3.Connection) -> None:

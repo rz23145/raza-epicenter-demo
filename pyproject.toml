@@ -53,9 +53,17 @@ src = ["src", "tests"]
 # Default rules plus import sorting.
 extend-select = ["I"]
 
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["typer.Option", "typer.Argument"]
+
 [tool.mypy]
 python_version = "3.11"
 strict = true
+
+[[tool.mypy.overrides]]
+module = ["sklearn.*", "pandas.*", "matplotlib.*", "scipy.*"]
+ignore_missing_imports = true
+follow_untyped_imports = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -1,0 +1,19 @@
+{
+  "jobs": [
+    {
+      "id": 111,
+      "title": "Senior Engineer, Shopify Plus Replatform",
+      "content": "We are moving to &lt;b&gt;Shopify Plus&lt;/b&gt; and building on checkout extensibility.",
+      "absolute_url": "https://boards.greenhouse.io/acme/jobs/111",
+      "updated_at": "2026-08-15T10:00:00-04:00"
+    },
+    {
+      "id": 222,
+      "title": "Warehouse Associate",
+      "content": "Pack boxes.",
+      "absolute_url": "https://boards.greenhouse.io/acme/jobs/222",
+      "updated_at": "2026-08-20T10:00:00-04:00"
+    }
+  ],
+  "meta": {"total": 2}
+}

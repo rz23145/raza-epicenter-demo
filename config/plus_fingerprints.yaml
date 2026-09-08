@@ -2,9 +2,76 @@
 #
 # Markers that a store is already on Shopify Plus. Used only for: building
 # positive labels, detecting panel conversions, excluding Plus stores from
-# the self-serve panel. Never used as features in the ceiling score. A test
-# enforces that no fingerprint key appears in feature_json.
+# the self-serve panel. Never used as features in the ceiling score; a test
+# fails if any fingerprint key appears in feature_json.
 #
-# Seeded in Phase 3. Empty in Phase 1 by design.
+# No public fingerprint is a plan lookup. Each is circumstantial. Every entry
+# is verified: false until a human confirms it against Shopify documentation
+# and a sample of known Plus stores. Conversion detection in the index uses
+# only verified fingerprints, so with zero verified entries the conversion
+# series is empty by construction and the README says so.
 
-[]
+- fingerprint_key: b2b_native_routes
+  display_name: "Native B2B markers"
+  evidence_url: "https://help.shopify.com/en/manual/b2b"               # TODO_VERIFY
+  patterns: {}
+  confidence: low
+  verified: false
+  notes: >
+    Pattern discovery required: fetch 10 known Plus B2B stores and diff
+    against 10 non-Plus stores to find rendered company-location selectors or
+    customer.b2b Liquid output. Empty until that work is done.
+
+- fingerprint_key: plus_only_app_script
+  display_name: "Script host of a Plus-gated app (Launchpad primary candidate)"
+  evidence_url: "https://help.shopify.com/en/manual/promoting-marketing/launchpad" # TODO_VERIFY which apps are Plus-gated today
+  patterns: {}
+  confidence: low
+  verified: false
+  notes: >
+    Plus gating has changed repeatedly (Flow, Markets, checkout extensibility
+    moved down-tier in the past). The human owner must confirm the currently
+    gated list before any pattern goes here.
+
+- fingerprint_key: multipass_login
+  display_name: "Multipass login route"
+  evidence_url: "https://shopify.dev/docs/api/multipass"               # TODO_VERIFY that Multipass remains Plus-only
+  patterns:
+    dom_marker:
+      - "/account/login/multipass"
+  confidence: medium
+  verified: false
+  notes: "Multipass is documented as Plus-only, but confirm before flipping verified."
+
+- fingerprint_key: shopify_plus_text
+  display_name: "Literal 'Shopify Plus' text"
+  evidence_url: ""                                                     # TODO_VERIFY: no doc needed, but sample the false positive rate
+  patterns:
+    dom_marker:
+      - "shopify\\s+plus"
+  confidence: low
+  verified: false
+  notes: >
+    Many false positives: agency badges, blog posts, theme credits. Never use
+    alone for labeling. Kept because it is cheap corroboration.
+
+- fingerprint_key: expansion_store_hreflang
+  display_name: "hreflang alternates to sibling storefronts on other domains"
+  evidence_url: "https://help.shopify.com/en/manual/markets"           # TODO_VERIFY expansion store docs
+  patterns: {}
+  confidence: medium
+  verified: false
+  notes: >
+    Computed from extracted hreflang alternates: two or more alternates on
+    external hosts. Also produced by non-Plus merchants running two separate
+    plans, which is documented and why this stays unverified by default.
+
+- fingerprint_key: checkout_branding_markers
+  display_name: "Checkout branding markers"
+  evidence_url: ""                                                     # TODO_VERIFY
+  patterns: {}
+  confidence: low
+  verified: false
+  notes: >
+    To be discovered empirically. Probably not observable without a checkout
+    page, which this pipeline does not fetch. Kept so the gap is explicit.

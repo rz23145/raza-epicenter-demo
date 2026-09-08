@@ -1,9 +1,63 @@
 # Review widget readers.
 #
-# Per vendor: how to detect its presence (script host patterns) and how to
-# read a public review count. Allowed methods are html_widget and
-# json_endpoint_referenced_in_page only. See project charter, Section 10.
-#
-# Seeded in Phase 4. Empty in Phase 1 by design.
+# detect_patterns are regexes matched against asset hosts and raw HTML.
+# count_regexes must have one capture group over the digits (commas allowed).
+# endpoint_url_regex, when set, must match a full literal URL present in the
+# page source; only such URLs are ever fetched, robots-checked on the vendor
+# host. All entries are verified: false until a human confirms each regex
+# against a live storefront using that vendor.
 
-[]
+- vendor: judgeme
+  detect_patterns:
+    - "judge\\.me"
+    - "jdgm-"
+  count_regexes:
+    - "data-number-of-reviews='?\"?([0-9,]+)"
+    - "jdgm-prev-badge__text[^>]*>\\s*([0-9,]+) review"
+  verified: false
+  notes: "Judge.me renders counts into the badge markup. TODO_VERIFY both regexes on a live store."
+
+- vendor: yotpo
+  detect_patterns:
+    - "yotpo\\.com"
+    - "staticw2\\.yotpo"
+  count_regexes:
+    - "\\(([0-9,]+)\\)\\s*</span>\\s*</div>\\s*<div class=\"yotpo"
+    - "data-review-count=\"([0-9,]+)\""
+  verified: false
+  notes: "Yotpo markup varies by widget version. TODO_VERIFY."
+
+- vendor: loox
+  detect_patterns:
+    - "loox\\.io"
+  count_regexes:
+    - "data-loox-reviews=\"([0-9,]+)\""
+    - "loox-rating[^>]*data-count=\"([0-9,]+)\""
+  verified: false
+  notes: "TODO_VERIFY on a live Loox store."
+
+- vendor: okendo
+  detect_patterns:
+    - "okendo"
+  count_regexes:
+    - "data-oke-reviews-count[^>]*>\\s*([0-9,]+)"
+  verified: false
+  notes: "TODO_VERIFY on a live Okendo store."
+
+- vendor: stamped
+  detect_patterns:
+    - "stamped\\.io"
+  count_regexes:
+    - "data-count=\"([0-9,]+)\"[^>]*stamped"
+    - "stamped-summary-text[^>]*>\\s*([0-9,]+)"
+  verified: false
+  notes: "TODO_VERIFY on a live Stamped store."
+
+- vendor: shopify_native
+  detect_patterns:
+    - "shopify-product-reviews"
+    - "spr-badge"
+  count_regexes:
+    - "spr-badge-caption\"?[^>]*>\\s*([0-9,]+) review"
+  verified: false
+  notes: "Shopify Product Reviews app markup (spr-*). TODO_VERIFY, the app was deprecated and markup varies."

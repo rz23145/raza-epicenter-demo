@@ -1,6 +1,6 @@
 PYTHON ?= python3.11
 
-.PHONY: install lint type unit test
+.PHONY: install lint type unit readme-check test
 
 install:
 	pip install -e ".[dev]"
@@ -12,6 +12,9 @@ type:
 	mypy --strict src/ceiling
 
 unit:
-	pytest --cov=ceiling --cov-report=term-missing tests
+	pytest --cov=ceiling --cov-report=term-missing --cov-fail-under=85 tests
 
-test: lint type unit
+readme-check:
+	$(PYTHON) scripts/readme_check.py
+
+test: lint type unit readme-check

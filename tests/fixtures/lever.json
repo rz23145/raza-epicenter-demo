@@ -1,0 +1,16 @@
+[
+  {
+    "id": "abc-123",
+    "text": "Ecommerce Lead",
+    "description": "Own our HYDROGEN storefront and headless commerce roadmap.",
+    "hostedUrl": "https://jobs.lever.co/acme/abc-123",
+    "createdAt": 1755302400000
+  },
+  {
+    "id": "def-456",
+    "text": "Accountant",
+    "description": "Close the books.",
+    "hostedUrl": "https://jobs.lever.co/acme/def-456",
+    "createdAt": 1755302400000
+  }
+]
