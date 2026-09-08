@@ -1,0 +1,10 @@
+# Plus fingerprints.
+#
+# Markers that a store is already on Shopify Plus. Used only for: building
+# positive labels, detecting panel conversions, excluding Plus stores from
+# the self-serve panel. Never used as features in the ceiling score. A test
+# enforces that no fingerprint key appears in feature_json.
+#
+# Seeded in Phase 3. Empty in Phase 1 by design.
+
+[]

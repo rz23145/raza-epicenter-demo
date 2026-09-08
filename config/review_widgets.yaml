@@ -1,0 +1,9 @@
+# Review widget readers.
+#
+# Per vendor: how to detect its presence (script host patterns) and how to
+# read a public review count. Allowed methods are html_widget and
+# json_endpoint_referenced_in_page only. See project charter, Section 10.
+#
+# Seeded in Phase 4. Empty in Phase 1 by design.
+
+[]

@@ -1,0 +1,11 @@
+# Workaround app dictionary.
+#
+# Each entry maps a third-party app to the Plus-native capability it
+# substitutes for on a self-serve store. Entry shape is documented in the
+# project charter, Section 6. Every entry starts as verified: false and only
+# a human flips it after reading both evidence URLs.
+#
+# Seeded in Phase 3. Empty in Phase 1 by design: ceiling doctor reports the
+# verified and unverified counts from this file.
+
+[]

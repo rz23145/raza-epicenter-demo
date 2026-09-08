@@ -1,0 +1,78 @@
+# Ceiling index pipeline settings.
+#
+# Rate limit values are floors mandated by the crawling policy in the project
+# charter. Validation in src/ceiling/settings.py rejects any value faster than
+# the floor. Values may only be made slower: larger delays, fewer attempts.
+#
+# The contact email is required before any HTTP is performed. Set it here or
+# via the CEILING_CONTACT_EMAIL environment variable. The env var wins.
+
+contact_email: null
+
+http:
+  user_agent_template: "CeilingIndexResearchBot/0.1 (+mailto:{contact_email})"
+  connect_timeout_s: 20.0
+  read_timeout_s: 30.0
+
+rate_limits:
+  per_host_min_interval_s: 1.0        # floor 1.0: at most 1 request/second/host
+  inter_host_min_interval_s: 2.0      # floor 2.0: seconds between hosts
+  backoff_base_s: 5.0                 # floor 5.0: exponential backoff base on 429/503
+  backoff_max_s: 60.0
+  max_attempts: 4                     # ceiling 4
+  max_consecutive_429_per_host: 3     # ceiling 3: hard stop on host after this many
+
+paths:
+  data_dir: data
+  db_path: data/ceiling.db
+  raw_dir: data/raw
+  exports_dir: data/exports
+  logs_dir: data/logs
+  labels_dir: data/labels
+
+scan:
+  products_json_max_pages: 40
+  products_json_page_limit: 250
+
+score:
+  # Transparent additive weights, readable by a PM. See features/score.py.
+  weights:
+    workaround_b2b: 3.0
+    workaround_multistore: 3.0
+    workaround_launch: 1.0
+    workaround_discount: 1.5
+    workaround_sso: 1.5
+    workaround_intl: 1.0
+    high_growth: 2.0
+    large_catalog: 1.0
+    review_scale_1k: 1.0
+    review_scale_5k: 2.0
+  thresholds:
+    ceiling_score: 3.0
+    high_growth_yoy: 0.5
+    high_growth_last_90d: 20
+    large_catalog_products: 500
+    review_scale_1k: 1000
+    review_scale_5k: 5000
+    intl_min_apps: 2
+  unverified_weight_multiplier: 0.5
+
+panel:
+  default_size: 750
+
+wayback:
+  min_interval_s: 2.0                 # floor 2.0 for web.archive.org
+  tolerance_days: 45
+  offsets_months: [-18, -12, -6, -3, 3]
+
+hiring:
+  min_interval_s: 2.0                 # floor 2.0 for job board APIs
+  terms:
+    - "shopify plus"
+    - "shopify+ "
+    - "hydrogen"
+    - "headless commerce"
+    - "replatform"
+    - "re-platform"
+    - "checkout extensibility"
+    - "shopify functions"
