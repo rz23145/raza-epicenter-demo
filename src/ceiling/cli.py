@@ -593,10 +593,13 @@ def validate_falsepos(
     settings, conn = _setup(config_dir, need_email=False)
     out = export_top_negatives(conn, settings.paths.exports_dir, top)
     console.print(f"exported: {out}")
+    from ceiling.validate.falsepos import REVIEWER_CATEGORIES
+
     console.print(
-        "fill in reviewer_category (dropshipper, agency demo store, actually"
-        " Plus and mislabeled, legitimate ceiling case, other), then run"
-        " ceiling validate falsepos-summary --file " + str(out)
+        "fill in reviewer_category ("
+        + ", ".join(REVIEWER_CATEGORIES)
+        + "), then run ceiling validate falsepos-summary --file "
+        + str(out)
     )
 
 
@@ -605,12 +608,22 @@ def validate_falsepos_summary(
     file: Path = typer.Option(..., "--file", help="The reviewed CSV."),
     config_dir: Path = CONFIG_DIR_OPTION,
 ) -> None:
-    """Tabulate the hand-reviewed false positive categories."""
-    from ceiling.validate.falsepos import summarize_review
+    """Tabulate the hand-reviewed false positive categories and write the
+    summary table to data/exports/falsepos_summary.md."""
+    from ceiling.validate.falsepos import render_summary_markdown, summarize_review
 
-    summary = summarize_review(file)
-    for category, n in summary.items():
-        console.print(f"{category}: {n}")
+    settings = _load_settings_or_exit(config_dir)
+    try:
+        summary = summarize_review(file)
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+    markdown = render_summary_markdown(summary, file)
+    out = settings.paths.exports_dir / "falsepos_summary.md"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(markdown, encoding="utf-8")
+    console.print(markdown)
+    console.print(f"written: {out}")
 
 
 @validate_app.command("reconcile")

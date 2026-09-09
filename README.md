@@ -6,28 +6,7 @@ the Advanced plan before a possible upgrade to Shopify Plus. Built for a
 buy-side research workflow. Everything here is reproducible from a clean
 clone plus the operator's label files.
 
-## Status: pipeline complete, signatures verified, first labeled scan run
-
-As of 2026-09-09: **14 of 23 app signatures and 1 of 6 Plus fingerprints
-(Multipass) are verified** against live storefront HTML, with the store
-checked and the matched snippet recorded in each YAML entry's notes. The
-label sets hold 41 Plus positives, 40 non-Plus negatives, and 12 confirmed
-migrators, each row backed by a source URL (targets are 150/150/20, so all
-three sets are below target and say so here). `disclosures.csv` is populated
-from Shopify's actual Q2 2026 and Q2 2025 releases and current pricing page.
-The 9 unverified signatures are unverified for documented reasons (backend
-apps with no storefront trace, apps invisible to anonymous visitors, one app
-that appears not to exist); they contribute at half weight.
-
-Material fact discovered during verification: Shopify Scripts ceased
-executing on 2026-06-30 and public Functions-based discount apps now run on
-every plan, so the discount_logic capability is a weaker Plus-strain signal
-than this charter originally assumed. The migrator set includes 4 rows that
-are "on Plus by" upper bounds rather than exact upgrade dates; each is
-flagged in its quote field.
-
-Every number this pipeline reports traces to a file in `data/exports/`. The
-`make readme-check` target enforces that discipline mechanically.
+## Results
 
 <!-- results:begin -->
 First full run 2026-09-09. Every number below appears in a file under
@@ -70,6 +49,30 @@ Plus share of MRR moved 35 to 34 percent year-over-year (2025Q2 to 2026Q2),
 so the naive attribution of share change to upgrades gives a negative
 number: any memo must model mix shift, not just upgrade counts.
 <!-- results:end -->
+
+## Status
+
+As of 2026-09-09: **14 of 23 app signatures and 1 of 6 Plus fingerprints
+(Multipass) are verified** against live storefront HTML, with the store
+checked and the matched snippet recorded in each YAML entry's notes. The
+label sets hold 41 Plus positives, 40 non-Plus negatives, and 12 confirmed
+migrators, each row backed by a source URL (targets are 150/150/20, so all
+three sets are below target and say so here). `disclosures.csv` is populated
+from Shopify's actual Q2 2026 and Q2 2025 releases and current pricing page.
+The 9 unverified signatures are unverified for documented reasons (backend
+apps with no storefront trace, apps invisible to anonymous visitors, one app
+that appears not to exist); they contribute at half weight.
+
+Material fact discovered during verification: Shopify Scripts ceased
+executing on 2026-06-30 and public Functions-based discount apps now run on
+every plan, so the discount_logic capability is a weaker Plus-strain signal
+than this charter originally assumed. The migrator set includes 4 rows that
+are "on Plus by" upper bounds rather than exact upgrade dates; each is
+flagged in its quote field.
+
+Every number in the Results section traces to a file in `data/exports/`. The
+`make readme-check` target enforces that discipline mechanically and fails
+if the Results section is empty or contains an untraceable number.
 
 ## The thesis
 

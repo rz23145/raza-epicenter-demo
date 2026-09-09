@@ -100,3 +100,22 @@ def test_signature_counts_on_seed_config() -> None:
     assert counts.apps_verified <= counts.apps_total
     assert counts.fingerprints_verified <= counts.fingerprints_total
     assert counts.unverified >= 0
+
+
+def test_doctor_verified_count_matches_top_level_yaml_entries() -> None:
+    """The doctor count must equal the number of top-level entries with
+    verified: true. Guards against comments or nested fields containing the
+    literal string 'verified: true' skewing naive counting, and against
+    duplicate or malformed entries skewing the parser."""
+    import yaml
+
+    for filename, total_attr, verified_attr in [
+        ("app_signatures.yaml", "apps_total", "apps_verified"),
+        ("plus_fingerprints.yaml", "fingerprints_total", "fingerprints_verified"),
+    ]:
+        raw = yaml.safe_load((CONFIG_DIR / filename).read_text(encoding="utf-8"))
+        assert isinstance(raw, list)
+        top_level_verified = sum(1 for e in raw if e.get("verified") is True)
+        counts = signature_counts(CONFIG_DIR)
+        assert getattr(counts, total_attr) == len(raw), filename
+        assert getattr(counts, verified_attr) == top_level_verified, filename

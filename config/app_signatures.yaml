@@ -5,7 +5,7 @@
 # against parsed asset host), script_src (regex against full asset URL),
 # dom_marker (regex against raw HTML, case-insensitive).
 #
-# Verification round 2026-09-09: every verified: true entry below was
+# Verification round 2026-09-09: every entry marked verified below was
 # confirmed by fetching a live storefront's raw HTML (one fetch per domain,
 # research UA with contact email) and observing the pattern. The store
 # checked and the matched snippet are recorded in notes. Patterns that were

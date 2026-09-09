@@ -14,7 +14,7 @@ from ceiling.validate.crosssection import (
     precision_recall_at_top_decile,
     size_bucket_aucs,
 )
-from ceiling.validate.falsepos import summarize_review
+from ceiling.validate.falsepos import render_summary_markdown, summarize_review
 from ceiling.validate.reconcile import ReconcileError, run_reconcile
 
 Y = [1, 1, 1, 1, 0, 0, 0, 0, 1, 0]
@@ -109,17 +109,42 @@ def test_reconcile_empty_file_fails(tmp_path: Path) -> None:
         run_reconcile(path)
 
 
-def test_falsepos_summary_tabulates(tmp_path: Path) -> None:
+def test_falsepos_summary_reviewed_file(tmp_path: Path) -> None:
+    """Five-row fixture: extra columns (reviewer_note and one unknown column)
+    are ignored, and the zero-score row is excluded from the share
+    denominator."""
     csv_path = tmp_path / "review.csv"
     csv_path.write_text(
-        "domain,ceiling_score,reviewer_category\n"
-        "a.example,5.0,dropshipper\n"
-        "b.example,4.0,dropshipper\n"
-        "c.example,3.0,legitimate ceiling case\n"
-        "d.example,2.0,\n",
+        "domain,ceiling_score,reviewer_category,reviewer_note,mystery_col\n"
+        "a.example,4.0,legitimate_ceiling_case,visited it,x\n"
+        "b.example,3.0,volume_only_legit,solo crafter,y\n"
+        "c.example,2.0,volume_only_legit,inflated catalog,z\n"
+        "d.example,1.0,unknown,,w\n"
+        "e.example,0.0,score_zero_not_flagged,never flagged,v\n",
         encoding="utf-8",
     )
     summary = summarize_review(csv_path)
-    assert summary["dropshipper"] == 2
-    assert summary["legitimate ceiling case"] == 1
-    assert summary["(blank)"] == 1
+    assert summary.total_rows == 5
+    assert summary.counts["legitimate_ceiling_case"] == 1
+    assert summary.counts["volume_only_legit"] == 2
+    assert summary.counts["score_zero_not_flagged"] == 1
+    assert summary.counts["volume_only_dropship"] == 0
+    assert summary.flagged_rows == 4
+    assert summary.share_denominator == 4
+    assert summary.flagged_shares["legitimate_ceiling_case"] == 0.25
+    assert summary.flagged_shares["volume_only_legit"] == 0.5
+    assert "score_zero_not_flagged" not in summary.flagged_shares
+    markdown = render_summary_markdown(summary, csv_path)
+    assert "| score_zero_not_flagged | 1 | excluded |" in markdown
+    assert "Rows with ceiling_score > 0 (the real flagged set): 4" in markdown
+    assert "excluding score_zero_not_flagged): 4" in markdown
+
+
+def test_falsepos_summary_rejects_out_of_vocabulary(tmp_path: Path) -> None:
+    csv_path = tmp_path / "review.csv"
+    csv_path.write_text(
+        "domain,ceiling_score,reviewer_category\na.example,4.0,dropshipper\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="accepted vocabulary"):
+        summarize_review(csv_path)
