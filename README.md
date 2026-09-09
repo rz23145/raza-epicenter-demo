@@ -6,19 +6,69 @@ the Advanced plan before a possible upgrade to Shopify Plus. Built for a
 buy-side research workflow. Everything here is reproducible from a clean
 clone plus the operator's label files.
 
-## Status: pipeline complete, no data collected
+## Status: pipeline complete, signatures verified, first labeled scan run
 
-This repository contains working, tested code and empty data files. **No scan
-has been run against real stores, the label sets are empty, and zero
-signatures are verified.** Every number this pipeline will ever report traces
-to a file in `data/exports/`; there are no such files yet, so this README
-claims no results. The `make readme-check` target enforces that discipline
-mechanically.
+As of 2026-09-09: **14 of 23 app signatures and 1 of 6 Plus fingerprints
+(Multipass) are verified** against live storefront HTML, with the store
+checked and the matched snippet recorded in each YAML entry's notes. The
+label sets hold 41 Plus positives, 40 non-Plus negatives, and 12 confirmed
+migrators, each row backed by a source URL (targets are 150/150/20, so all
+three sets are below target and say so here). `disclosures.csv` is populated
+from Shopify's actual Q2 2026 and Q2 2025 releases and current pricing page.
+The 9 unverified signatures are unverified for documented reasons (backend
+apps with no storefront trace, apps invisible to anonymous visitors, one app
+that appears not to exist); they contribute at half weight.
+
+Material fact discovered during verification: Shopify Scripts ceased
+executing on 2026-06-30 and public Functions-based discount apps now run on
+every plan, so the discount_logic capability is a weaker Plus-strain signal
+than this charter originally assumed. The migrator set includes 4 rows that
+are "on Plus by" upper bounds rather than exact upgrade dates; each is
+flagged in its quote field.
+
+Every number this pipeline reports traces to a file in `data/exports/`. The
+`make readme-check` target enforces that discipline mechanically.
 
 <!-- results:begin -->
-No results yet. This section is populated only from files in data/exports/
-after real scans, and every number in it must appear in an export file or
-readme-check fails the build.
+First full run 2026-09-09. Every number below appears in a file under
+data/exports/ (copies of the key exports are committed in
+data/exports/samples/), enforced by make readme-check.
+
+Index, panel v1 (40 small self-serve stores drawn from the negative label
+set; a strain-representative panel is future work):
+
+- share_ceiling: 0.175
+- share_workaround_any: 0.025
+- share_high_growth: 0.375
+- conversion series: empty by design until a second, later scan exists.
+- hiring board coverage on the panel: 0 stores, as the charter predicted
+  for small merchants.
+
+Cross-sectional validation (36 scanned positives vs 40 negatives, base rate
+0.474, from crosssection_report.md):
+
+- AUC of ceiling_score: 0.494, bootstrap 95% CI [0.368, 0.613]. No
+  discriminative power on this cross-section, and the report explains why
+  that is expected: stores that already upgraded replaced their workarounds
+  with native features, so current-Plus vs small-negative is dominated by
+  size (product_count alone: 0.658). The cross-section validates the volume
+  proxies, not the workaround signal.
+- Precision at top decile: 0.571.
+
+Wayback backtest (12 migrators, 20 matched controls, snapshot coverage
+0.463, from wayback_backtest_summary.md):
+
+- Migrator workaround prevalence before migration: 0.100 at -12 months,
+  0.125 at -6 months.
+- Control prevalence: 0.000 at every offset.
+- Directionally consistent with the thesis, far too small to carry a claim:
+  8 to 10 snapshots per offset.
+
+Reconciliation against disclosures (reconcile_report.md): an
+Advanced-to-Plus upgrade at list is 1901 USD/month of subscription revenue.
+Plus share of MRR moved 35 to 34 percent year-over-year (2025Q2 to 2026Q2),
+so the naive attribution of share change to upgrades gives a negative
+number: any memo must model mix shift, not just upgrade counts.
 <!-- results:end -->
 
 ## The thesis
@@ -42,8 +92,10 @@ replatform. This pipeline turns those traces into:
 No public marker is a plan lookup. Each fingerprint in
 `config/plus_fingerprints.yaml` is circumstantial:
 
-- `multipass_login`: Multipass is documented as Plus-only, but the marker is
-  a string in HTML, and documentation can lag reality.
+- `multipass_login` (verified 2026-09-09): shopify.dev states "Your store
+  must be on a Shopify Plus plan" and the marker was observed live on
+  brooklinen.com. Caveat: Multipass now requires legacy customer accounts,
+  so absence proves nothing.
 - `shopify_plus_text`: literal "Shopify Plus" text has many false positives
   (agency badges, blog posts).
 - `expansion_store_hreflang`: also produced by non-Plus merchants running two
@@ -53,9 +105,9 @@ No public marker is a plan lookup. Each fingerprint in
 
 Consequences baked into the code: fingerprints never enter the ceiling score
 (a test fails if a fingerprint key appears in `feature_json`), and conversion
-detection uses **only verified fingerprints**. Since zero fingerprints are
-verified today, the conversion series is empty by construction until the
-human owner completes verification. That is intentional, not a bug.
+detection uses **only verified fingerprints**. Multipass is the single
+verified fingerprint today, so the conversion series detects only
+Multipass-visible conversions until more fingerprints are verified.
 
 ## Crawling policy
 
@@ -179,14 +231,19 @@ and dead stores; stores that go dark are attrition, never conversion.
 
 ## Next three months (operator's plan)
 
-1. Verify signatures: read both evidence URLs per entry, flip `verified`,
-   discover patterns for the empty entries against live installs.
-2. Build labels to target sizes (300+ positives, 300+ negatives, 40+
-   confirmed migrators with dated sources).
-3. First panel scan, then monthly rescans; the index needs two scans before
+1. Verify the remaining 9 app signatures and 5 fingerprints where possible:
+   most need either a confirmed live install (Kaktus, HulkApps VolumeBoost,
+   BUCKS, miniOrange) or have no anonymous storefront trace by design
+   (Syncio, Sync Power, Wholesale Hub) and should stay documented gaps.
+2. Grow labels from current 41/40/12 toward target sizes (150+ positives,
+   150+ negatives, 20+ confirmed migrators with dated sources). Prefer
+   migrators with exact months; 4 of the current 12 are upper bounds.
+3. Build the panel, then monthly rescans; the index needs two scans before
    the conversion series exists.
 4. Run the Wayback backtest and the false-positive hand review; only then
-   decide whether the signal carries a memo.
+   decide whether the signal carries a memo. Note from disclosures: Plus
+   share of MRR went 35% (2025Q2) to 34% (2026Q2), so the memo must address
+   mix shift, not just upgrades.
 
 ## Provenance and honesty rules
 
