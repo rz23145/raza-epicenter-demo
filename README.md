@@ -74,6 +74,33 @@ Every number in the Results section traces to a file in `data/exports/`. The
 `make readme-check` target enforces that discipline mechanically and fails
 if the Results section is empty or contains an untraceable number.
 
+## Data sample
+
+`ceiling export samples` copies every export CSV and markdown file, plus a
+dated copy of the SQLite database, into `data/exports/samples/`, which is
+committed. Contents from the 2026-09-09 run:
+
+- `crosssection_scores.csv` (76 rows): per-store ceiling score, label, and
+  volume features for every scanned labeled store in the cross-section.
+- `falsepos_review.csv` (30 rows): the top-scoring negatives with score
+  components and matched apps, hand-reviewed (reviewer_category and
+  reviewer_note filled in).
+- `index_timeseries.csv` (1 row): the panel v1 index point for the
+  2026-09-09 scan (share_ceiling, share_workaround_any, share_high_growth).
+- `wayback_backtest.csv` (160 rows): one row per migrator/control per
+  month-offset with snapshot availability and workaround detection.
+- `crosssection_report.md` (59 lines): AUC, bootstrap CI, precision at top
+  decile, and the interpretation of why the cross-section is size-dominated.
+- `falsepos_summary.md` (16 lines): reviewer category counts and shares of
+  the flagged set from the hand review.
+- `reconcile_report.md` (15 lines): pipeline output reconciled against
+  Shopify's disclosed MRR mix and list prices.
+- `wayback_backtest_summary.md` (13 lines): migrator vs control workaround
+  prevalence at each month offset before migration.
+- `ceiling_2026-09-09.db`: the full SQLite database from the September 9
+  scan — 17 tables covering 81 stores and 1197 archived fetches, with
+  provenance (URL, timestamp, SHA-256, body path) on every fetch.
+
 ## The thesis
 
 Shopify does not publish who is on which plan. But merchants outgrowing the

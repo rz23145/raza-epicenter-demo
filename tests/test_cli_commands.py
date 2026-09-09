@@ -7,6 +7,7 @@ import json
 import shutil
 import sqlite3
 import time
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -290,9 +291,20 @@ def test_export_samples_cli(project_dir: Path) -> None:
     big_csv = exports / "big.csv"
     big_csv.write_text("col\n" + "\n".join(str(i) for i in range(100)))
     (exports / "report.md").write_text("# report\n")
-    result = runner.invoke(app, ["export", "samples", "--rows", "10"])
+    result = runner.invoke(app, ["export", "samples"])
     assert result.exit_code == 0, result.output
     sample = exports / "samples" / "big.csv"
     assert sample.exists()
-    assert len(sample.read_text().strip().splitlines()) == 11
+    assert sample.read_text() == big_csv.read_text()
     assert (exports / "samples" / "report.md").exists()
+    today = datetime.now(UTC).date().isoformat()
+    db_copy = exports / "samples" / f"ceiling_{today}.db"
+    assert db_copy.exists()
+    conn = sqlite3.connect(db_copy)
+    try:
+        tables = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'"
+        ).fetchall()
+    finally:
+        conn.close()
+    assert any(name == "stores" for (name,) in tables)

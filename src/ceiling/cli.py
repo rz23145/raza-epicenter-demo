@@ -760,25 +760,28 @@ def index_plot(
 
 
 @export_app.command("samples")
-def export_samples(
-    rows: int = typer.Option(20, "--rows", help="Rows per sample file."),
-    config_dir: Path = CONFIG_DIR_OPTION,
-) -> None:
-    """Copy the first rows of every export CSV into data/exports/samples/."""
-    settings, _conn = _setup(config_dir, need_email=False)
+def export_samples(config_dir: Path = CONFIG_DIR_OPTION) -> None:
+    """Copy every export CSV and markdown file, plus a dated copy of the
+    SQLite database, into data/exports/samples/."""
+    settings, conn = _setup(config_dir, need_email=False)
     exports = settings.paths.exports_dir
     samples = exports / "samples"
     samples.mkdir(parents=True, exist_ok=True)
-    copied = 0
-    for path in sorted(exports.glob("*.csv")):
-        with path.open(encoding="utf-8") as fh:
-            head = [line for _i, line in zip(range(rows + 1), fh, strict=False)]
-        (samples / path.name).write_text("".join(head), encoding="utf-8")
-        copied += 1
-    for path in sorted(exports.glob("*.md")):
-        shutil.copy(path, samples / path.name)
-        copied += 1
-    console.print(f"sampled {copied} export file(s) into {samples}")
+    copied: list[str] = []
+    for pattern in ("*.csv", "*.md"):
+        for path in sorted(exports.glob(pattern)):
+            shutil.copy(path, samples / path.name)
+            copied.append(path.name)
+    db_name = f"ceiling_{datetime.now(UTC).date().isoformat()}.db"
+    dest = sqlite3.connect(samples / db_name)
+    try:
+        conn.backup(dest)
+    finally:
+        dest.close()
+    copied.append(db_name)
+    for name in copied:
+        console.print(f"  {name}")
+    console.print(f"copied {len(copied)} file(s) into {samples}")
 
 
 if __name__ == "__main__":
