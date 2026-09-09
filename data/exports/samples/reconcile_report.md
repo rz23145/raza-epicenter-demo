@@ -12,4 +12,5 @@ Trailing change in Plus share (2025Q2 -> 2026Q2): 35% -> 34% = -1.00pp
 Implied annual upgrade count consistent with that change (attributing the whole change to Advanced-to-Plus upgrades at list): -1.00pp x 221,000,000 / 100 / 1901 = -1,163
 
 ## Panel bound
-Panel bound not computed. It needs a computed index (share_ceiling) and a self-serve base: either a selfserve_merchant_count disclosure row or an explicit --assumed-base argument, stated as an assumption.
+Self-serve base: 2,000,000 merchants (ASSUMPTION supplied by the operator, not a disclosure). At share_ceiling = 0.175, the panel implies 350,000 flagged stores in the base.
+To account for the implied -1,163 annual upgrades, -0.3% of flagged stores would need to upgrade per year. If this rate is implausibly precise or above 100%, the signal cannot carry the claim and the README must say so.

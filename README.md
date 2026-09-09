@@ -93,8 +93,9 @@ committed. Contents from the 2026-09-09 run:
   decile, and the interpretation of why the cross-section is size-dominated.
 - `falsepos_summary.md` (16 lines): reviewer category counts and shares of
   the flagged set from the hand review.
-- `reconcile_report.md` (15 lines): pipeline output reconciled against
-  Shopify's disclosed MRR mix and list prices.
+- `reconcile_report.md` (16 lines): pipeline output reconciled against
+  Shopify's disclosed MRR mix and list prices, including the panel bound
+  under an operator-assumed 2,000,000-merchant self-serve base.
 - `wayback_backtest_summary.md` (13 lines): migrator vs control workaround
   prevalence at each month offset before migration.
 - `ceiling_2026-09-09.db`: the full SQLite database from the September 9
