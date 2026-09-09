@@ -35,13 +35,17 @@ def test_extensions_path_alone_matches_nothing() -> None:
     assert matches == []
 
 
-def test_unverified_signatures_are_flagged() -> None:
+def test_match_verified_flag_copies_from_yaml() -> None:
+    """Each match carries the verified flag of its YAML entry, so unverified
+    signatures can be down-weighted at scoring time."""
     html = fixture_text("shop_home.html")
     entries = load_app_signatures(CONFIG_DIR)
     compiled = compile_app_signatures(entries)
     matches = match_apps(compiled, [extract(html)], [html])
     assert matches, "fixture should match at least one signature"
-    assert all(m.verified is False for m in matches)
+    verified_by_key = {e.key: e.verified for e in entries}
+    for m in matches:
+        assert m.verified == verified_by_key[m.key]
 
 
 def test_pattern_matching_cdn_shopify_host_is_rejected() -> None:

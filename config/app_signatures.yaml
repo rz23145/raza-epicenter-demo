@@ -5,14 +5,19 @@
 # against parsed asset host), script_src (regex against full asset URL),
 # dom_marker (regex against raw HTML, case-insensitive).
 #
-# Every entry is verified: false until a human reads both evidence URLs and
-# flips it. Entries with empty patterns are candidates awaiting pattern
-# discovery; they can never match and exist so the discovery work is visible.
-# Patterns marked TODO_VERIFY were written from public knowledge of the app
-# and must be confirmed against real storefront source before being trusted.
+# Verification round 2026-09-09: every verified: true entry below was
+# confirmed by fetching a live storefront's raw HTML (one fetch per domain,
+# research UA with contact email) and observing the pattern. The store
+# checked and the matched snippet are recorded in notes. Patterns that were
+# proposed earlier but affirmatively REFUTED on live stores were removed and
+# are named in notes so they do not get reintroduced.
 #
-# script_host patterns that would match cdn.shopify.com are rejected at load
-# time: that host serves app blocks for thousands of apps and identifies none.
+# Note on delivery modes: many apps now load via Shopify ScriptTag, which
+# embeds the asset URL inside inline JSON with escaped slashes (https:\/\/...).
+# Those URLs never appear as <script src> tags, so they must be matched as
+# dom_marker, not script_src. Where an app ships as a cdn.shopify.com app
+# block, the stable extension PATH is used as script_src; bare-host
+# script_host patterns matching cdn.shopify.com are rejected at load time.
 
 # b2b_wholesale
 
@@ -21,102 +26,142 @@
   vendor: SparkLayer Ltd
   capability: b2b_wholesale
   plus_native_equivalent: "Shopify B2B (company profiles, catalogs, net terms) available on Plus"
-  plus_native_evidence_url: "https://help.shopify.com/en/manual/b2b"   # TODO_VERIFY exact page
-  app_evidence_url: "https://apps.shopify.com/sparklayer"              # TODO_VERIFY
+  plus_native_evidence_url: "https://help.shopify.com/en/manual/b2b"   # blocks bots (403); plan gating confirmed at https://shopify.dev/docs/apps/build/b2b, checked 2026-09-09
+  app_evidence_url: "https://apps.shopify.com/sparklayer"
   patterns:
     script_host:
       - "cdn\\.sparklayer\\.io"
-      - "sparklayer\\.io"
     dom_marker:
-      - "data-sparklayer"
-      - "sparklayer-"
+      - "app\\.sparklayer\\.io"
+      - "sparkOptions"
   plus_compatible: true
   used_on_plus_commonly: false
-  confidence: medium
-  verified: false
-  notes: "SparkLayer markets to both Plus and non-Plus. On a non-Plus store it substitutes for native B2B."
+  confidence: high
+  verified: true
+  notes: >
+    Verified 2026-09-09 on wholesale.psychi.co.uk: <script async
+    src="https://cdn.sparklayer.io/spark-redirect.js">, web-pixel config with
+    appDomain app.sparklayer.io, inline window.sparkOptions. Earlier
+    candidates data-sparklayer and sparklayer- were NOT present on the live
+    page and were removed. sparkcdn.io appears in vendor docs as a newer
+    loader but was not seen live, so it is not patterned.
 
 - app_key: wholesale_gorilla
   display_name: Wholesale Gorilla
   vendor: Wholesale Gorilla LLC
   capability: b2b_wholesale
   plus_native_equivalent: "Shopify B2B company accounts and price lists on Plus"
-  plus_native_evidence_url: "https://help.shopify.com/en/manual/b2b"   # TODO_VERIFY
-  app_evidence_url: "https://apps.shopify.com/wholesale-gorilla"       # TODO_VERIFY
+  plus_native_evidence_url: "https://help.shopify.com/en/manual/b2b"   # blocks bots (403); plan gating confirmed at https://shopify.dev/docs/apps/build/b2b, checked 2026-09-09
+  app_evidence_url: "https://apps.shopify.com/wholesale-gorilla"
   patterns:
-    script_host:
-      - "wholesalegorilla"                                             # TODO_VERIFY against real storefront
+    script_src:
+      - "cdn\\.shopify\\.com/extensions/[^/]+/wholesale-gorilla-\\d+/assets/"
     dom_marker:
-      - "wholesale-gorilla"
+      - "wsg-index\\.js"
+      - "wholesalegorilla\\.app"
   plus_compatible: true
   used_on_plus_commonly: false
-  confidence: low
-  verified: false
-  notes: "Host pattern unconfirmed. Needs a real install to verify."
+  confidence: high
+  verified: true
+  notes: >
+    Verified 2026-09-09 on two stores from the vendor's own customer logos:
+    sodapup.com and alaskasaltco.com, both loading
+    /extensions/<id>/wholesale-gorilla-45/assets/wsg-dependencies.js. Earlier
+    candidate script_host "wholesalegorilla" is unreliable: one store serves
+    the backend from a herokuapp.com hostname, so the extension path and the
+    wsg-index.js server_link are the stable signals.
 
 - app_key: bss_b2b_wholesale
   display_name: "BSS: B2B/Wholesale Solution"
   vendor: BSS Commerce
   capability: b2b_wholesale
   plus_native_equivalent: "Shopify B2B on Plus"
-  plus_native_evidence_url: "https://help.shopify.com/en/manual/b2b"   # TODO_VERIFY
-  app_evidence_url: "https://apps.shopify.com/b2b-solution"            # TODO_VERIFY
+  plus_native_evidence_url: "https://help.shopify.com/en/manual/b2b"   # blocks bots (403); plan gating confirmed at https://shopify.dev/docs/apps/build/b2b, checked 2026-09-09
+  app_evidence_url: "https://apps.shopify.com/b2b-solution-custom-pricing"  # corrected 2026-09-09: /b2b-solution 404s
   patterns:
+    script_src:
+      - "cdn\\.shopify\\.com/extensions/.+/assets/bss-b2b-[a-z-]+\\.js"
     dom_marker:
-      - "bss-b2b"                                                      # TODO_VERIFY
+      - "BSS_B2B\\."
+      - "bss-b2b-(product-price|variant-price|cart-item-key)"
   plus_compatible: true
   used_on_plus_commonly: false
-  confidence: low
-  verified: false
-  notes: "Marker unconfirmed."
+  confidence: high
+  verified: true
+  notes: >
+    Verified 2026-09-09 on www.schlechtekarten.de (BSS case study store):
+    extension assets bss-b2b-state.js, bss-b2b-phone.js, inline BSS_B2B.
+    globals, and bss-b2b-* CSS selectors. WARNING kept from verification:
+    the bare marker "bss-b2b" alone is unsafe because it also matches the
+    separate BSS Lock app (bss-b2b-lock); patterns are scoped to avoid that.
 
 - app_key: wholesale_club_orbit
-  display_name: Wholesale Club
+  display_name: "B2B Wholesale Hub (formerly Wholesale Club)"
   vendor: Orbit
   capability: b2b_wholesale
   plus_native_equivalent: "Shopify B2B price lists and net terms on Plus"
-  plus_native_evidence_url: "https://help.shopify.com/en/manual/b2b"   # TODO_VERIFY
-  app_evidence_url: "https://apps.shopify.com/wholesale-club"          # TODO_VERIFY
-  patterns:
-    dom_marker:
-      - "wholesale-club"                                               # TODO_VERIFY
+  plus_native_evidence_url: "https://help.shopify.com/en/manual/b2b"   # blocks bots (403); plan gating confirmed at https://shopify.dev/docs/apps/build/b2b, checked 2026-09-09
+  app_evidence_url: "https://apps.shopify.com/wholesale-club"
+  patterns: {}
   plus_compatible: true
   used_on_plus_commonly: false
   confidence: low
   verified: false
-  notes: "Marker unconfirmed."
+  notes: >
+    Checked 2026-09-09 against Orbit's own demo store
+    (wholesale-pricing-demo.myshopify.com): an anonymous visitor's HTML
+    contains NO app markers; wholesale pricing renders server-side via
+    Liquid only for logged-in tagged customers. The earlier candidate
+    dom_marker "wholesale-club" was REFUTED: it matched plain blog URL
+    handles on that very store, guaranteed false positives. No reliable
+    anonymous-visible pattern exists; entry kept so the gap is visible.
 
 - app_key: wholesale_pricing_discount
   display_name: Wholesale Pricing Discount
   vendor: Wholesale Helper
   capability: b2b_wholesale
   plus_native_equivalent: "Shopify B2B price lists on Plus"
-  plus_native_evidence_url: "https://help.shopify.com/en/manual/b2b"   # TODO_VERIFY
-  app_evidence_url: "https://apps.shopify.com/wholesale-pricing-discount" # TODO_VERIFY
+  plus_native_evidence_url: "https://help.shopify.com/en/manual/b2b"   # blocks bots (403); plan gating confirmed at https://shopify.dev/docs/apps/build/b2b, checked 2026-09-09
+  app_evidence_url: "https://apps.shopify.com/wholesale-pricing-discount"
   patterns:
-    script_host:
-      - "wholesalehelper"                                              # TODO_VERIFY
+    dom_marker:
+      - "apps/wpdapp/"
+      - "wpd_app_integration"
   plus_compatible: true
   used_on_plus_commonly: false
-  confidence: low
-  verified: false
-  notes: "Host pattern unconfirmed."
+  confidence: high
+  verified: true
+  notes: >
+    Verified 2026-09-09 on www.bendigopottery.com.au (listing reviewer):
+    theme-injected comment "wpd_app_integration start", app-proxy links to
+    /apps/wpdapp/wholesale/login, .wpd-logout-link CSS. Earlier candidate
+    script_host "wholesalehelper" was NOT present anywhere and was removed:
+    the app's storefront surface is the app-proxy path, not an external host.
 
 - app_key: b2b_login_lock_bss
-  display_name: "B2B Login/Lock & Hide Price"
+  display_name: "BSS B2B Lock, Login & Password (formerly B2B Login/Lock & Hide Price)"
   vendor: BSS Commerce
   capability: b2b_wholesale
   plus_native_equivalent: "Shopify B2B customer gating on Plus"
-  plus_native_evidence_url: "https://help.shopify.com/en/manual/b2b"   # TODO_VERIFY
-  app_evidence_url: "https://apps.shopify.com/b2b-login-access-management" # TODO_VERIFY
+  plus_native_evidence_url: "https://help.shopify.com/en/manual/b2b"   # blocks bots (403); plan gating confirmed at https://shopify.dev/docs/apps/build/b2b, checked 2026-09-09
+  app_evidence_url: "https://apps.shopify.com/login-to-access-pages"   # corrected 2026-09-09: /b2b-login-access-management 404s
   patterns:
+    script_src:
+      - "cdn\\.shopify\\.com/extensions/[^/]+/login-to-access-pages-\\d+/assets/"
     dom_marker:
-      - "bss-b2b-login"                                                # TODO_VERIFY
+      - "apps/bss-b2b-lock/blocks"
+      - "bss-lock-element"
   plus_compatible: true
   used_on_plus_commonly: false
-  confidence: low
-  verified: false
-  notes: "Marker unconfirmed."
+  confidence: high
+  verified: true
+  notes: >
+    Verified 2026-09-09 on two stores: dermaplanepro.com (BSS case study) and
+    www.schlechtekarten.de. App block handle shopify://apps/bss-b2b-lock,
+    extension assets login-to-access-pages-81/assets/bss-util-bss-v2.min.js,
+    span class bss-lock-element. Earlier candidate "bss-b2b-login" was never
+    observed and was removed. Patterns kept distinct from bss_b2b_wholesale
+    because both BSS apps often coexist on one store.
 
 # multistore_sync
 
@@ -125,30 +170,38 @@
   vendor: Syncio
   capability: multistore_sync
   plus_native_equivalent: "Plus expansion stores with product sync"
-  plus_native_evidence_url: "https://help.shopify.com/en/manual/intro-to-shopify/pricing-plans/plans-features/shopify-plus-plan" # TODO_VERIFY
-  app_evidence_url: "https://apps.shopify.com/syncio"                  # TODO_VERIFY
-  patterns:
-    script_host:
-      - "syncio"                                                       # TODO_VERIFY
+  plus_native_evidence_url: "https://help.shopify.com/en/manual/intro-to-shopify/pricing-plans/plans-features/shopify-plus-plan" # TODO_VERIFY: blocks bots (403), confirm in a browser
+  app_evidence_url: "https://apps.shopify.com/syncio"
+  patterns: {}
   plus_compatible: true
   used_on_plus_commonly: false
   confidence: low
   verified: false
-  notes: "Syncio runs mostly backend to backend; a storefront trace may not exist. Pattern discovery required."
+  notes: >
+    Backend-only, confirmed 2026-09-09: a connected store's live HTML
+    (americantrench.com, 1.5 MB homepage) contains zero occurrences of
+    syncio, and the listing's data-access scopes show no theme or script
+    injection. Inventory sync happens entirely over the Admin API. The
+    earlier candidate script_host "syncio" was removed; no storefront trace
+    exists to pattern on.
 
 - app_key: multistore_sync_power
   display_name: Multi-Store Sync Power
   vendor: EGNITION
   capability: multistore_sync
   plus_native_equivalent: "Plus expansion stores with product sync"
-  plus_native_evidence_url: "https://help.shopify.com/en/manual/intro-to-shopify/pricing-plans/plans-features/shopify-plus-plan" # TODO_VERIFY
-  app_evidence_url: "https://apps.shopify.com/multi-store-sync-power"  # TODO_VERIFY
+  plus_native_evidence_url: "https://help.shopify.com/en/manual/intro-to-shopify/pricing-plans/plans-features/shopify-plus-plan" # TODO_VERIFY: blocks bots (403), confirm in a browser
+  app_evidence_url: "https://apps.shopify.com/multi-store-inventory-sync"  # corrected 2026-09-09: /multi-store-sync-power 404s
   patterns: {}
   plus_compatible: true
   used_on_plus_commonly: false
   confidence: low
   verified: false
-  notes: "Backend sync app, likely no storefront trace. No pattern found; entry kept so the gap is visible."
+  notes: >
+    Backend-only, confirmed from the corrected listing's data-access scopes
+    2026-09-09: Online Store access is view-only, everything else is Admin
+    API (inventory, products, orders). No storefront injection is possible
+    with these scopes, so no pattern can exist.
 
 # launch_scheduling
 
@@ -157,32 +210,43 @@
   vendor: Hextom
   capability: launch_scheduling
   plus_native_equivalent: "Launchpad scheduled theme, price, and inventory changes on Plus"
-  plus_native_evidence_url: "https://help.shopify.com/en/manual/promoting-marketing/launchpad" # TODO_VERIFY
-  app_evidence_url: "https://apps.shopify.com/countdown-timer-bar"     # TODO_VERIFY
+  plus_native_evidence_url: "https://apps.shopify.com/launchpad"       # listing states "Only available to Shopify Plus customers", checked 2026-09-09
+  app_evidence_url: "https://apps.shopify.com/event-promotion-bar"     # corrected 2026-09-09: /countdown-timer-bar 404s; app is listed as "Hextom: Countdown Timer Bar" at this slug
   patterns:
-    script_host:
-      - "hextom\\.com"                                                 # TODO_VERIFY
+    script_src:
+      - "/extensions/[^/]+/event-promotion-bar-\\d+/assets/eventpromotionbar\\.js"
+    dom_marker:
+      - "eventpromotionbar\\.js"
   plus_compatible: true
   used_on_plus_commonly: true
-  confidence: low
-  verified: false
-  notes: "Weak signal: countdown timers are generic marketing, not necessarily launch scheduling."
+  confidence: high
+  verified: true
+  notes: >
+    Verified 2026-09-09 on dailycartpk.com: app block loads
+    /extensions/<id>/event-promotion-bar-209/assets/eventpromotionbar.js with
+    config "name":"Countdown timer bar". Earlier candidate script_host
+    "hextom.com" did NOT fire for this app (it now ships as a cdn.shopify.com
+    app block) and was removed. Signal caveat unchanged: countdown timers are
+    generic marketing, not necessarily launch scheduling.
 
 - app_key: bold_discounts_scheduler
   display_name: "BOLD Discounts (scheduled sales)"
   vendor: BOLD Commerce
   capability: launch_scheduling
   plus_native_equivalent: "Launchpad scheduled sales on Plus"
-  plus_native_evidence_url: "https://help.shopify.com/en/manual/promoting-marketing/launchpad" # TODO_VERIFY
-  app_evidence_url: "https://apps.shopify.com/product-discount"        # TODO_VERIFY
-  patterns:
-    script_host:
-      - "boldapps\\.net"                                               # TODO_VERIFY
+  plus_native_evidence_url: "https://apps.shopify.com/launchpad"       # listing states "Only available to Shopify Plus customers", checked 2026-09-09
+  app_evidence_url: "https://apps.shopify.com/product-discount"
+  patterns: {}
   plus_compatible: true
   used_on_plus_commonly: false
   confidence: low
   verified: false
-  notes: "boldapps.net hosts several BOLD apps; host alone cannot distinguish the discount scheduler. Treat as weak."
+  notes: >
+    Deliberately empty 2026-09-09: the BOLD Discounts storefront trace
+    (discountv3.boldapps.net, see bold_discounts) cannot distinguish
+    scheduled-sale use from plain discount use, so patterning it here would
+    double-count the same evidence under two capabilities. The discount_logic
+    entry carries the pattern; this entry stays as a visible gap.
 
 # discount_logic
 
@@ -190,127 +254,180 @@
   display_name: BOLD Discounts
   vendor: BOLD Commerce
   capability: discount_logic
-  plus_native_equivalent: "Shopify Functions and legacy Scripts for custom discount logic"
-  plus_native_evidence_url: "https://help.shopify.com/en/manual/checkout-settings/script-editor" # TODO_VERIFY, Functions have moved down-tier in part
-  app_evidence_url: "https://apps.shopify.com/product-discount"        # TODO_VERIFY
+  plus_native_equivalent: "Custom-app Shopify Functions discount logic, Plus-gated; legacy Scripts ceased executing 2026-06-30"
+  plus_native_evidence_url: "https://shopify.dev/docs/apps/build/functions/migrating-from-shopify-scripts" # checked 2026-09-09: custom apps with Functions are Plus-only; public Functions apps work on every plan, so this capability is a weak strain signal
+  app_evidence_url: "https://apps.shopify.com/product-discount"
   patterns:
+    script_src:
+      - "discountv3\\.boldapps\\.net/static/js/storefront\\.bundle\\.min\\.js"
     dom_marker:
-      - "bold-discounts"                                               # TODO_VERIFY
+      - "discountv3\\.boldapps\\.net"
   plus_compatible: true
   used_on_plus_commonly: false
-  confidence: low
-  verified: false
-  notes: "Shares vendor host with bold_discounts_scheduler; dom marker unconfirmed."
+  confidence: high
+  verified: true
+  notes: >
+    Verified 2026-09-09 on milbstore.com (Minor League Baseball): ScriptTag
+    asset https://discountv3.boldapps.net/static/js/storefront.bundle.min.js
+    inside inline JSON, hence the dom_marker. The discountv3 subdomain is the
+    discounts-specific discriminator on the shared boldapps.net host. Earlier
+    candidate dom_marker "bold-discounts" was REFUTED (absent from live HTML)
+    and removed.
 
 - app_key: discount_ninja
-  display_name: Discount Ninja
+  display_name: "Discount Ninja Promo Engine"
   vendor: Limoni Apps
   capability: discount_logic
-  plus_native_equivalent: "Shopify Functions custom discounts"
-  plus_native_evidence_url: "https://help.shopify.com/en/manual/checkout-settings/script-editor" # TODO_VERIFY
-  app_evidence_url: "https://apps.shopify.com/discount-ninja"          # TODO_VERIFY
+  plus_native_equivalent: "Custom-app Shopify Functions discounts, Plus-gated; legacy Scripts ceased executing 2026-06-30"
+  plus_native_evidence_url: "https://shopify.dev/docs/apps/build/functions/migrating-from-shopify-scripts" # checked 2026-09-09
+  app_evidence_url: "https://apps.shopify.com/discount-url"            # corrected 2026-09-09: /discount-ninja 404s
   patterns:
-    script_host:
-      - "discountninja"                                                # TODO_VERIFY
+    dom_marker:
+      - "limoniapps-discountninja"
   plus_compatible: true
   used_on_plus_commonly: false
-  confidence: low
-  verified: false
-  notes: "Host pattern unconfirmed."
+  confidence: high
+  verified: true
+  notes: >
+    Verified 2026-09-09 on etnies.com: 234 matches of
+    data-limoniapps-discountninja-* product attributes plus
+    limoniapps-sticky-bar-wrapper. Earlier candidate script_host
+    "discountninja" was REFUTED: no script loads from such a host, only an
+    anchor href to discountninja.io. The limoniapps-discountninja attribute
+    prefix is vendor-unique.
 
 - app_key: amai_discounts
-  display_name: Amai Discounts
+  display_name: "Amai Upsell+ Volume Discounts"
   vendor: Amai
   capability: discount_logic
-  plus_native_equivalent: "Shopify Functions custom discounts"
-  plus_native_evidence_url: "https://help.shopify.com/en/manual/checkout-settings/script-editor" # TODO_VERIFY
-  app_evidence_url: "https://apps.shopify.com/partners/amai"           # TODO_VERIFY
+  plus_native_equivalent: "Custom-app Shopify Functions discounts, Plus-gated; legacy Scripts ceased executing 2026-06-30"
+  plus_native_evidence_url: "https://shopify.dev/docs/apps/build/functions/migrating-from-shopify-scripts" # checked 2026-09-09
+  app_evidence_url: "https://apps.shopify.com/pricing-by-quantity"     # identified 2026-09-09; earlier partner-page URL replaced with the concrete listing
+  patterns:
+    dom_marker:
+      - "amaicdn\\.com[\\\\/]+pricing-by-quantity"
+  plus_compatible: true
+  used_on_plus_commonly: false
+  confidence: high
+  verified: true
+  notes: >
+    Verified 2026-09-09 on fairwindfasteners.com: ScriptTag asset
+    amaicdn.com/pricing-by-quantity/js/clear-cart.js inside inline JSON
+    (slashes JSON-escaped, handled by the character class in the pattern).
+    The amaicdn.com host alone is NOT sufficient: it is shared across Amai
+    apps (energymuse.com loads amaicdn.com/timer-app/ for their countdown
+    app), so the pricing-by-quantity path segment is the discriminator.
+
+- app_key: kaktus_volume_discount
+  display_name: "K: Quantity Breaks, Discounts"
+  vendor: Kaktus
+  capability: discount_logic
+  plus_native_equivalent: "Custom-app Shopify Functions tiered discounts, Plus-gated; legacy Scripts ceased executing 2026-06-30"
+  plus_native_evidence_url: "https://shopify.dev/docs/apps/build/functions/migrating-from-shopify-scripts" # checked 2026-09-09
+  app_evidence_url: "https://apps.shopify.com/kaktus-volume-discount"  # identified 2026-09-09; earlier partner-page URL replaced with the concrete listing
   patterns: {}
   plus_compatible: true
   used_on_plus_commonly: false
   confidence: low
   verified: false
-  notes: "No specific pattern found; 'amai' alone is too generic to use."
-
-- app_key: kaktus_volume_discount
-  display_name: "Kaktus: Volume and Tiered Discounts"
-  vendor: Kaktus
-  capability: discount_logic
-  plus_native_equivalent: "Shopify Functions tiered discounts"
-  plus_native_evidence_url: "https://help.shopify.com/en/manual/checkout-settings/script-editor" # TODO_VERIFY
-  app_evidence_url: "https://apps.shopify.com/partners/kaktusapps"     # TODO_VERIFY
-  patterns:
-    dom_marker:
-      - "kaktus-"                                                      # TODO_VERIFY
-  plus_compatible: true
-  used_on_plus_commonly: false
-  confidence: low
-  verified: false
-  notes: "Marker unconfirmed."
+  notes: >
+    Checked 2026-09-09 on fencearmor.com and energymuse.com. Earlier
+    candidate dom_marker "kaktus-" did not match. The only indirect hit was
+    the store's cookie-consent script referencing 'kaktusapp' as a
+    script-src classifier, which can outlive an uninstall and never
+    identifies the app's own assets in raw HTML. Not sufficient to verify;
+    patterns stay empty.
 
 - app_key: hulkapps_volume_boost
-  display_name: "HulkApps VolumeBoost"
+  display_name: "Hulk Volume Discount Bundles (formerly VolumeBoost)"
   vendor: HulkApps
   capability: discount_logic
-  plus_native_equivalent: "Shopify Functions tiered discounts"
-  plus_native_evidence_url: "https://help.shopify.com/en/manual/checkout-settings/script-editor" # TODO_VERIFY
-  app_evidence_url: "https://apps.shopify.com/volume-boost"            # TODO_VERIFY
+  plus_native_equivalent: "Custom-app Shopify Functions tiered discounts, Plus-gated; legacy Scripts ceased executing 2026-06-30"
+  plus_native_evidence_url: "https://shopify.dev/docs/apps/build/functions/migrating-from-shopify-scripts" # checked 2026-09-09
+  app_evidence_url: "https://apps.shopify.com/volume-discount-by-hulkapps" # corrected 2026-09-09: /volume-boost 404s
   patterns:
-    script_host:
-      - "hulkapps\\.com"                                               # TODO_VERIFY: host may be shared across HulkApps apps
+    dom_marker:
+      - "shopify://apps/volume-discount-by-hulkapps"                   # TODO_VERIFY: plausible app-block handle, never observed live
   plus_compatible: true
   used_on_plus_commonly: false
   confidence: low
   verified: false
-  notes: "Vendor host is shared across HulkApps products; weak on its own."
+  notes: >
+    Critical trap confirmed 2026-09-09 on mechanicalkeyboards.com and
+    duckcommander.com: the shared window.hulkapps bootstrap includes the
+    literal string volumediscount.hulkapps.com on stores running ONLY Hulk
+    Product Options (both had is_volume_discount: null). Neither
+    "hulkapps.com" nor any string containing "volumediscount" is safe as a
+    signature. No store with a confirmed active install was found; the one
+    remaining pattern is a plausible app-block handle awaiting live
+    confirmation and contributes only at unverified half weight.
 
 # sso_login
 
 - app_key: miniorange_sso
-  display_name: "miniOrange Single Sign On"
+  display_name: "miniOrange Single Sign On-SSO"
   vendor: miniOrange
   capability: sso_login
   plus_native_equivalent: "Multipass single sign-on on Plus"
-  plus_native_evidence_url: "https://shopify.dev/docs/api/multipass"   # TODO_VERIFY
-  app_evidence_url: "https://apps.shopify.com/single-sign-on-sso-login" # TODO_VERIFY
+  plus_native_evidence_url: "https://shopify.dev/docs/api/multipass"   # confirmed 2026-09-09: "Your store must be on a Shopify Plus plan"; note Multipass now requires legacy customer accounts
+  app_evidence_url: "https://apps.shopify.com/single-sign-onsso"       # corrected 2026-09-09: /single-sign-on-sso-login 404s
   patterns:
-    script_host:
-      - "miniorange"                                                   # TODO_VERIFY
+    dom_marker:
+      - "store\\.xecurify\\.com/moas/broker/login/shopify"             # TODO_VERIFY: from miniOrange docs, not yet observed on a live store
   plus_compatible: true
   used_on_plus_commonly: false
   confidence: medium
   verified: false
-  notes: "miniOrange host names are distinctive but unconfirmed on a real install."
+  notes: >
+    Checked 2026-09-09: reviewer shop names on the listing did not map to
+    reachable Shopify storefronts (many installs are access-gated corporate
+    swag stores). Per miniOrange docs the storefront trace is an SSO link to
+    store.xecurify.com/moas/broker/login/shopify/..., typically only on
+    /account/login, which this pipeline does not fetch. Earlier candidate
+    script_host "miniorange" had no supporting evidence and was removed.
 
 - app_key: customerhub_sso
   display_name: CustomerHub
   vendor: CustomerHub
   capability: sso_login
   plus_native_equivalent: "Multipass single sign-on on Plus"
-  plus_native_evidence_url: "https://shopify.dev/docs/api/multipass"   # TODO_VERIFY
-  app_evidence_url: ""                                                 # TODO_VERIFY: app listing not located yet
+  plus_native_evidence_url: "https://shopify.dev/docs/api/multipass"   # confirmed 2026-09-09: "Your store must be on a Shopify Plus plan"; note Multipass now requires legacy customer accounts
+  app_evidence_url: ""
   patterns: {}
   plus_compatible: true
   used_on_plus_commonly: false
   confidence: low
   verified: false
-  notes: "Candidate from charter; no pattern or listing confirmed."
+  notes: >
+    Investigated 2026-09-09: no Shopify app named "CustomerHub SSO" exists.
+    Near-misses ruled out: "C:Hub Customer Accounts"
+    (apps.shopify.com/customerhub) whose own FAQ says it does not manage the
+    login process, and Klaviyo's "Customer Hub" product feature. Candidate
+    for removal from the dictionary by the human owner.
 
 - app_key: helium_customer_fields
   display_name: Helium Customer Fields
   vendor: Helium
   capability: sso_login
   plus_native_equivalent: "Multipass and expanded account controls on Plus"
-  plus_native_evidence_url: "https://shopify.dev/docs/api/multipass"   # TODO_VERIFY
-  app_evidence_url: "https://apps.shopify.com/customr"                 # TODO_VERIFY
+  plus_native_evidence_url: "https://shopify.dev/docs/api/multipass"   # confirmed 2026-09-09: "Your store must be on a Shopify Plus plan"; note Multipass now requires legacy customer accounts
+  app_evidence_url: "https://apps.shopify.com/customr"
   patterns:
-    script_host:
-      - "customerfields\\.com"                                         # TODO_VERIFY
+    dom_marker:
+      - "customerfields\\.com"
+      - "tools[\\\\/]+customr"
   plus_compatible: true
   used_on_plus_commonly: true
-  confidence: low
-  verified: false
-  notes: "Weak: registration form builder, only loosely an SSO substitute."
+  confidence: medium
+  verified: true
+  notes: >
+    Verified 2026-09-09 on whiskersnpaws.com (www.wnp.com.hk): inline embed
+    loader config with baseApiUrl app.customerfields.com, fetches to
+    app.customerfields.com/embed_api, app-proxy path /tools/customr. All
+    references are inside inline JS, never a script src tag, so a
+    script_host rule would MISS real installs; dom_marker is required.
+    Capability caveat unchanged: registration form builder, only loosely an
+    SSO substitute.
 
 # international_markets
 # All weak alone. The score only counts intl when at least two intl apps match.
@@ -320,75 +437,116 @@
   vendor: Weglot
   capability: international_markets
   plus_native_equivalent: "Higher Markets limits and expansion stores on Plus"
-  plus_native_evidence_url: "https://help.shopify.com/en/manual/markets" # TODO_VERIFY current per-plan market limits
-  app_evidence_url: "https://apps.shopify.com/weglot"                  # TODO_VERIFY
+  plus_native_evidence_url: "https://help.shopify.com/en/manual/markets" # TODO_VERIFY current per-plan market limits; page blocks bots (403)
+  app_evidence_url: "https://apps.shopify.com/weglot"
   patterns:
     script_host:
       - "cdn\\.weglot\\.com"
-      - "weglot\\.com"
+    script_src:
+      - "cdn\\.weglot\\.com/weglot(\\.min|_script_tag)\\.js"
     dom_marker:
-      - "weglot"
+      - "id=\"weglot-(script|data)\""
+      - "cdn\\.weglot\\.com"
   plus_compatible: true
   used_on_plus_commonly: true
   confidence: high
-  verified: false
-  notes: "Pattern is distinctive. Signal strength is weak alone because translation apps are common at every tier."
+  verified: true
+  notes: >
+    Verified 2026-09-09 on timex.com: both delivery modes present, a direct
+    <script src="https://cdn.weglot.com/weglot.min.js" id="weglot-script">
+    and a ScriptTag entry for weglot_script_tag.js, plus the weglot-data
+    JSON block. The earlier broad patterns "weglot\.com" and bare "weglot"
+    were narrowed: dashboard.weglot.com can appear inside unrelated bundled
+    JS (seen on rhodeskin.com) without a real install, so patterns anchor on
+    cdn.weglot.com and the weglot-script/weglot-data element ids.
 
 - app_key: langify
   display_name: langify
   vendor: langify
   capability: international_markets
-  plus_native_evidence_url: "https://help.shopify.com/en/manual/markets" # TODO_VERIFY
-  app_evidence_url: "https://apps.shopify.com/langify"                 # TODO_VERIFY
+  plus_native_equivalent: "Higher Markets limits and expansion stores on Plus"
+  plus_native_evidence_url: "https://help.shopify.com/en/manual/markets" # TODO_VERIFY; page blocks bots (403)
+  app_evidence_url: "https://apps.shopify.com/langify"
   patterns:
     dom_marker:
-      - "langify"                                                      # TODO_VERIFY
+      - "shopify://apps/langify/blocks"
+      - "/langify-\\d+/assets/langify-lib\\.(css|js)"
   plus_compatible: true
   used_on_plus_commonly: true
-  confidence: medium
-  verified: false
-  notes: "Weak alone."
+  confidence: high
+  verified: true
+  notes: >
+    Verified 2026-09-09 on charlottesydimby.com: app block comment
+    shopify://apps/langify/blocks/... and asset
+    /extensions/<id>/langify-91/assets/langify-lib.css. Assets load only
+    from cdn.shopify.com app-block paths, so the stable path fragment is the
+    signature. The earlier bare marker "langify" was replaced: it could hit
+    unrelated text, the app-block handle is exact. Weak alone as a signal.
 
 - app_key: transcy
   display_name: Transcy
   vendor: OneCommerce
   capability: international_markets
-  plus_native_evidence_url: "https://help.shopify.com/en/manual/markets" # TODO_VERIFY
-  app_evidence_url: "https://apps.shopify.com/transcy"                 # TODO_VERIFY
+  plus_native_equivalent: "Higher Markets limits and expansion stores on Plus"
+  plus_native_evidence_url: "https://help.shopify.com/en/manual/markets" # TODO_VERIFY; page blocks bots (403)
+  app_evidence_url: "https://apps.shopify.com/transcy"
   patterns:
     dom_marker:
-      - "transcy"                                                      # TODO_VERIFY
+      - "shopify://apps/transcy/blocks"
+      - "transcy_currenc"
   plus_compatible: true
   used_on_plus_commonly: true
-  confidence: medium
-  verified: false
-  notes: "Weak alone."
+  confidence: high
+  verified: true
+  notes: >
+    Verified 2026-09-09 on charlie-paris.com: app-embed block with handle
+    transcy plus hundreds of inline transcy_-prefixed JS globals, e.g.
+    transcy_curencyDefault (vendor's own typo "curency" is stable, hence the
+    truncated pattern transcy_currenc which matches both spellings). Weak
+    alone as a signal.
 
 - app_key: bucks_currency
   display_name: "BUCKS Currency Converter"
   vendor: Helixo
   capability: international_markets
-  plus_native_evidence_url: "https://help.shopify.com/en/manual/markets" # TODO_VERIFY
-  app_evidence_url: "https://apps.shopify.com/auto-multi-currency-converter" # TODO_VERIFY
+  plus_native_equivalent: "Higher Markets limits and expansion stores on Plus"
+  plus_native_evidence_url: "https://help.shopify.com/en/manual/markets" # TODO_VERIFY; page blocks bots (403)
+  app_evidence_url: "https://apps.shopify.com/bucks-currency-converter" # corrected 2026-09-09: the earlier URL /auto-multi-currency-converter is a DIFFERENT app (Currency Converter Bear by Conversion Bear)
   patterns: {}
   plus_compatible: true
   used_on_plus_commonly: true
   confidence: low
   verified: false
-  notes: "'bucks' is too generic to pattern on. Discovery required."
+  notes: >
+    Checked 2026-09-09 on three stores ranked as top BUCKS users by a
+    third-party tracker (mikesbikes.com, idwpublishing.com,
+    thamesandhudson.com): zero hits for bucks or helixo and no unattributed
+    currency-converter assets, so the tracker attribution is stale or the
+    embed is disabled. No storefront marker discovered; patterns stay empty.
 
 - app_key: hextom_multi_currency
   display_name: "Hextom: Multi Currency Converter"
   vendor: Hextom
   capability: international_markets
-  plus_native_evidence_url: "https://help.shopify.com/en/manual/markets" # TODO_VERIFY
-  app_evidence_url: "https://apps.shopify.com/multi-currency-converter" # TODO_VERIFY
-  patterns: {}
+  plus_native_equivalent: "Higher Markets limits and expansion stores on Plus"
+  plus_native_evidence_url: "https://help.shopify.com/en/manual/markets" # TODO_VERIFY; page blocks bots (403)
+  app_evidence_url: "https://apps.shopify.com/multi-currency-converter"
+  patterns:
+    script_src:
+      - "cdn\\.hextom\\.com/js/multicurrencyconverter\\.js"
+    dom_marker:
+      - "multicurrencyconverter\\.js"
   plus_compatible: true
   used_on_plus_commonly: true
-  confidence: low
-  verified: false
-  notes: "Shares hextom.com host with the countdown app; host alone cannot distinguish them, so no pattern is set."
+  confidence: high
+  verified: true
+  notes: >
+    Verified 2026-09-09 on googoohair.com: ScriptTag asset
+    cdn.hextom.com/js/multicurrencyconverter.js inside inline JSON, hence
+    the filename dom_marker. The filename disambiguates from other Hextom
+    apps on the shared host: fairwindfasteners.com loads
+    cdn.hextom.com/js/freeshippingbar.js, confirming host alone is not
+    app-specific. Weak alone as a signal.
 
 # checkout_customization
 #

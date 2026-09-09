@@ -12,10 +12,15 @@ import responses
 from ceiling.db import repo
 from ceiling.http.client import Client
 from ceiling.settings import Settings
+from ceiling.util import today_iso
 from tests.conftest import FakeClock
 
 HOST = "shop.example"
 OTHER = "other.example"
+
+# The same-day disk cache matches fetched_at (real wall clock) against the
+# scan date, so the test scan date must be the real current date.
+TODAY = today_iso()
 
 ALLOW_ALL = "User-agent: *\nAllow: /\n"
 
@@ -26,7 +31,7 @@ def make_client(
     return Client(
         settings,
         conn,
-        "2026-09-08",
+        TODAY,
         clock=fake_clock.clock,
         sleeper=fake_clock.sleep,
     )
@@ -135,8 +140,8 @@ def test_cache_hit_avoids_second_request(
         assert len(page_calls) == 1
 
     # a later scan on the same day reuses the body from disk without refetching
-    now = "2026-09-08T01:00:00Z"
-    scan2 = repo.get_or_create_scan(conn, "2026-09-08", "test2", "sha", "csha", now)
+    now = f"{TODAY}T01:00:00Z"
+    scan2 = repo.get_or_create_scan(conn, TODAY, "test2", "sha", "csha", now)
     conn.commit()
     with responses.RequestsMock() as rsps:
         rsps.get(f"https://{HOST}/robots.txt", body=ALLOW_ALL)

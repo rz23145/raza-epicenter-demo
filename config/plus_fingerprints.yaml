@@ -13,7 +13,11 @@
 
 - fingerprint_key: b2b_native_routes
   display_name: "Native B2B markers"
-  evidence_url: "https://help.shopify.com/en/manual/b2b"               # TODO_VERIFY
+  evidence_url: "https://shopify.dev/docs/apps/build/b2b"
+  # help.shopify.com/en/manual/b2b blocks automated fetches (403, checked
+  # 2026-09-09). The shopify.dev page confirms B2B is plan-gated ("Your plan
+  # must support B2B capabilities") but does not spell out the tier, so the
+  # human owner should still confirm the exact gating in a browser.
   patterns: {}
   confidence: low
   verified: false
@@ -24,28 +28,41 @@
 
 - fingerprint_key: plus_only_app_script
   display_name: "Script host of a Plus-gated app (Launchpad primary candidate)"
-  evidence_url: "https://help.shopify.com/en/manual/promoting-marketing/launchpad" # TODO_VERIFY which apps are Plus-gated today
+  evidence_url: "https://apps.shopify.com/launchpad"
   patterns: {}
   confidence: low
   verified: false
   notes: >
-    Plus gating has changed repeatedly (Flow, Markets, checkout extensibility
-    moved down-tier in the past). The human owner must confirm the currently
-    gated list before any pattern goes here.
+    Checked 2026-09-09. The Launchpad app store listing states "Note: Only
+    available to Shopify Plus customers", so the gate is confirmed, but
+    Launchpad runs inside the admin and injects no storefront script, so
+    there is nothing to pattern on from public HTML. Patterns stay empty.
+    help.shopify.com blocks automated fetches (403), which is why the
+    evidence URL points at the app listing instead. Related fact recorded
+    the same day: Shopify Scripts ceased executing 2026-06-30 and custom-app
+    Shopify Functions remain Plus-gated
+    (https://shopify.dev/docs/apps/build/functions/migrating-from-shopify-scripts).
 
 - fingerprint_key: multipass_login
   display_name: "Multipass login route"
-  evidence_url: "https://shopify.dev/docs/api/multipass"               # TODO_VERIFY that Multipass remains Plus-only
+  evidence_url: "https://shopify.dev/docs/api/multipass"
   patterns:
     dom_marker:
       - "/account/login/multipass"
-  confidence: medium
-  verified: false
-  notes: "Multipass is documented as Plus-only, but confirm before flipping verified."
+  confidence: high
+  verified: true
+  notes: >
+    Verified 2026-09-09. shopify.dev/docs/api/multipass Requirements section
+    states: "Your store must be on a Shopify Plus plan." Live confirmation:
+    brooklinen.com homepage HTML contains
+    'https://www.brooklinen.com/account/login/multipass/' + multipass_token.
+    Caveat: Multipass now works only with legacy customer accounts, so
+    absence of this marker is not evidence of non-Plus. Presence remains a
+    strong Plus indicator.
 
 - fingerprint_key: shopify_plus_text
   display_name: "Literal 'Shopify Plus' text"
-  evidence_url: ""                                                     # TODO_VERIFY: no doc needed, but sample the false positive rate
+  evidence_url: ""
   patterns:
     dom_marker:
       - "shopify\\s+plus"
@@ -53,7 +70,12 @@
   verified: false
   notes: >
     Many false positives: agency badges, blog posts, theme credits. Never use
-    alone for labeling. Kept because it is cheap corroboration.
+    alone for labeling. Kept because it is cheap corroboration. Sensitivity
+    sample 2026-09-09: 0 of 8 likely-Plus storefront homepages (gymshark,
+    fashionnova, kyliecosmetics, colourpop, allbirds, brooklinen, ruggable,
+    deathwishcoffee) contained the literal text, so recall on homepages is
+    near zero. False positive rate on confirmed negatives still unmeasured,
+    so verified stays false.
 
 - fingerprint_key: expansion_store_hreflang
   display_name: "hreflang alternates to sibling storefronts on other domains"
